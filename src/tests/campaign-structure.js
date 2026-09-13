@@ -24,4 +24,7 @@ assert.deepEqual(SEONGA_LIBRARY_EVENT.characterPool,SEONGA_CAFETERIA_EVENT.chara
 CampaignProgress.complete("library-reality-audit","세 번째 사건 테스트 완료");
 assert.ok(CampaignProgress.unlockedCharacterIds().includes("jegal-mina"));
 assert.ok(!SEONGA_LIBRARY_EVENT.characterPool.includes("jegal-mina"));
+assert.equal(Object.hasOwn(JSON.parse(saved),"records"),false,"사건 완료 시 대응 기록을 저장하지 않아야 한다.");
+saved=JSON.stringify({completed:["endless-classroom"],records:[{summary:"과거 기록"}]});
+assert.deepEqual(CampaignProgress.load(),{completed:["endless-classroom"]},"기존 세이브의 records는 무시해야 한다.");
 console.log(JSON.stringify({initial:CampaignProgress.rosterUnlocks.initial,afterFirst:CampaignProgress.rosterUnlocks["endless-classroom"],afterThird:CampaignProgress.rosterUnlocks["library-reality-audit"],tutorialPool:SEONGA_TUTORIAL_EVENT.characterPool,cafeteriaPool:SEONGA_CAFETERIA_EVENT.characterPool,libraryPool:SEONGA_LIBRARY_EVENT.characterPool},null,2));

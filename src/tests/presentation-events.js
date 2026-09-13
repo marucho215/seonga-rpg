@@ -29,5 +29,6 @@ for(const id of ["hwayoung","kang-unshim","epi-minos","inan","kim-wooju","mageun
 assert.doesNotMatch(css,/#77bfff/i,"김우주의 이전 밝은 파랑 팔레트를 남기지 않는다.");
 assert.match(css,/\.presentation-layer\.tone-ability\.accent-mageuna\{/,"마근아의 규정 집행에만 붉은 특수 강조를 사용한다.");
 assert.match(cafeteriaApp,/previous\?\.type==="effect"/,"연속 effect를 결과 묶음으로 합쳐야 한다.");
-assert.match(cafeteriaApp,/activePresentation\.type!=="dialogue"/,"dialogue에는 자동 종료 타이머를 걸지 않아야 한다.");
-console.log(JSON.stringify({investigationTypes:investigation.map(x=>x.type),purifyTypes:purify.map(x=>x.type),transitionQueued:true,mobileContract:true,profilePalettes:8,effectBundling:true},null,2));
+assert.doesNotMatch(cafeteriaApp,/setTimeout\(advancePresentation/,"플레이 로그는 자동 진행 타이머를 사용하지 않아야 한다.");
+assert.match(cafeteriaApp,/data-action="presentation-next">계속/,"모든 플레이 로그에 계속 버튼이 있어야 한다.");
+console.log(JSON.stringify({investigationTypes:investigation.map(x=>x.type),purifyTypes:purify.map(x=>x.type),transitionQueued:true,mobileContract:true,profilePalettes:8,effectBundling:true,manualLogAdvance:true},null,2));

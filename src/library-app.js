@@ -1,7 +1,7 @@
 "use strict";
 
 const app=document.querySelector("#app"),E=LibraryEngine.event;
-let state=LibraryEngine.create(),activePresentation=null,inputLocked=false,presentationTimer=null,presentationQueue=[];
+let state=LibraryEngine.create(),activePresentation=null,inputLocked=false,presentationQueue=[];
 const button=(label,action,disabled=false,description="",primary=false)=>`<button type="button" class="action-button ${primary?"primary":""}" data-action="${action}" ${disabled||inputLocked?"disabled":""}><strong>${label}</strong>${description?`<small>${description}</small>`:""}</button>`;
 const ICON_PATHS={hwayoung:"assets/icons/hwayoung.png","kang-unshim":"assets/icons/kang-unshim.png","epi-minos":"assets/icons/epi-minos.png",inan:"assets/icons/inan.png","kim-wooju":"assets/icons/kim-wooju.png",mageuna:"assets/icons/mageuna.png","byeon-ari":"assets/icons/byeon-ari.png",josangmin:"assets/icons/josangmin.png","jegal-mina":"assets/icons/jegal-mina.png"};
 const iconMarkup=(id,className="char-icon")=>ICON_PATHS[id]?`<img class="${className}" src="${ICON_PATHS[id]}" alt="" aria-hidden="true">`:"";
@@ -12,13 +12,12 @@ const cast=()=>[...state.partyIds,state.supportId].filter((id,index,all)=>all.in
 
 function presentationMarkup(){
   if(!activePresentation)return"";const x=activePresentation,kind=x.type||"narration",commonTone=["damage","danger","success","warning"].includes(x.tone),accentId=x.accent||(!commonTone&&E.characterPool.includes(x.source)?x.source:""),accent=accentId?` accent-${accentId}`:"",tone=x.tone?` tone-${x.tone}`:"",body=kind==="effect"&&x.items?`<ul>${x.items.map(item=>`<li>${item.text}</li>`).join("")}</ul>`:`<strong>${kind==="dialogue"?`“${x.text}”`:x.text}</strong>`;
-  return`<aside class="presentation-layer ${kind}${accent}${tone}" aria-live="assertive">${kind==="dialogue"?iconMarkup(accentId,"presentation-watermark"):""}<span class="presentation-kind">${kind==="dialogue"?x.speaker:kind==="effect"?"RESULT":"SCENE"}</span><div class="presentation-body">${body}</div><button type="button" class="presentation-next" data-action="presentation-next">${kind==="dialogue"?"계속":"빠르게 넘기기"} <b>›</b></button></aside>`;
+  return`<aside class="presentation-layer ${kind}${accent}${tone}" aria-live="assertive">${kind==="dialogue"?iconMarkup(accentId,"presentation-watermark"):""}<span class="presentation-kind">${kind==="dialogue"?x.speaker:kind==="effect"?"RESULT":"SCENE"}</span><div class="presentation-body">${body}</div><button type="button" class="presentation-next" data-action="presentation-next">계속 <b>›</b></button></aside>`;
 }
 function bundlePresentation(events){const bundled=[];for(const item of events){const previous=bundled[bundled.length-1];if(item.type==="effect"&&previous?.type==="effect"){previous.items.push(item);previous.text=previous.items.map(x=>x.text).join(" · ");if(["danger","damage"].includes(item.tone))previous.tone=item.tone;}else bundled.push(item.type==="effect"?{...item,items:[item]}:item);}return bundled;}
-function presentationDelay(item){return item.type==="narration"?720:560;}
-function advancePresentation(){if(presentationTimer)clearTimeout(presentationTimer);presentationTimer=null;if(!presentationQueue.length){activePresentation=null;inputLocked=false;render();return;}activePresentation=presentationQueue.shift();render();if(activePresentation.type!=="dialogue")presentationTimer=setTimeout(advancePresentation,presentationDelay(activePresentation));}
+function advancePresentation(){if(!presentationQueue.length){activePresentation=null;inputLocked=false;render();return;}activePresentation=presentationQueue.shift();render();}
 function playPresentation(){presentationQueue.push(...bundlePresentation(LibraryEngine.takePresentation(state)));if(window.SEONGA_TEST_INSTANT_PRESENTATION){presentationQueue.length=0;activePresentation=null;inputLocked=false;render();return;}if(inputLocked||!presentationQueue.length){render();return;}inputLocked=true;advancePresentation();}
-function flushPresentation(){if(presentationTimer)clearTimeout(presentationTimer);presentationQueue.length=0;LibraryEngine.takePresentation(state);activePresentation=null;inputLocked=false;render();}
+function flushPresentation(){presentationQueue.length=0;LibraryEngine.takePresentation(state);activePresentation=null;inputLocked=false;render();}
 function render(){const views={party:renderParty,briefing:renderBriefing,exploration:renderExploration,battle:renderBattle,success:renderResult,failure:renderResult};app.innerHTML=presentationMarkup()+views[state.phase]();}
 
 function renderParty(){
