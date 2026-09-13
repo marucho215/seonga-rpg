@@ -9,7 +9,8 @@ window.SEONGA_NEUTRAL_KITS = {
   mageuna:{principle:"합당한 규칙을 선언해 위험 행동을 제한",verbs:["declareRule","blockRisk","controlTiming"],limit:3},
   "byeon-ari":{principle:"오염을 제거하고 안전 구역을 만드는 대신 부담 축적",verbs:["purify","createSafeZone","takeBurden"]},
   josangmin:{principle:"행동을 보류해 최소 동작의 결정적 개입으로 전환",verbs:["conserveAction","amplifyNextAction","decisiveIntervention"]},
-  "jegal-mina":{principle:"주장한 정보를 현실에 덮어쓰기",verbs:["overwriteReality"]}
+  "jegal-mina":{principle:"주장한 정보를 현실에 덮어쓰기",verbs:["overwriteReality"]},
+  magnum:{principle:"타인의 외형과 능력을 약화된 형태로 훔쳐 사용",verbs:["envyStrike","mirrorAbility"]}
 };
 
 window.SEONGA_UNLOCKS = {

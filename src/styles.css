@@ -1170,6 +1170,12 @@ button,a{outline-color:var(--school)}
   --char-soft:#ece7f0;
   --char-special:#4f77b8;
 }
+.accent-magnum{
+  --char-ink:#526435;
+  --char-accent:#b59a36;
+  --char-soft:#f0eddc;
+  --char-special:#1f1b22;
+}
 
 .actor-focus[class*=accent-]{
   border-left-color:var(--char-accent);
