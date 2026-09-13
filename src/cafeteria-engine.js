@@ -44,7 +44,7 @@ window.CafeteriaEngine = (() => {
     const location=E.investigations.find(x=>x.id===s.selectedLocation),choice=location?.choices.find(x=>x.id===choiceId);
     if(!choice)return false;
     s.clues.push(choice.clue);s.investigated.push(location.id);s.investigationsLeft--;s.selectedLocation=null;if(choice.unlocksPriority)s.unlocks[`${choice.unlocksPriority}Priority`]=true;
-    narration(s,`${location.label}에서 ${character(choice.owner).name}의 조사가 시작된다.`,{accent:choice.owner});dialogue(s,choice.quote,character(choice.owner).name,{accent:choice.owner});narration(s,choice.result,{accent:choice.owner});effect(s,`단서 확보 — ${E.clueInfo[choice.clue].label}. ${E.clueInfo[choice.clue].result}`,{source:choice.owner,stat:"clue"});
+    narration(s,`${location.label}에서 ${character(choice.owner).name}의 조사가 시작된다.`,{accent:choice.owner});dialogue(s,choice.quote,character(choice.owner).name,{accent:choice.owner});narration(s,choice.result,{accent:choice.owner});effect(s,`단서 확보 · ${E.clueInfo[choice.clue].label}`,{source:choice.owner,stat:"clue"});
     return true;
   }
 
@@ -72,13 +72,13 @@ window.CafeteriaEngine = (() => {
     if(type==="pressure"&&context&&pattern(s).id==="coagulation"&&["pressure","hybrid"].includes(context.category))result--;
     return Math.max(0,result);
   }
-  function lowerSpread(s,amount){const before=s.spread,actual=adjustedAmount(s,amount,"pressure");s.spread=Math.max(0,s.spread-actual);effect(s,actual?`확산도 ${before} → ${s.spread}.`:`현상의 응고와 학습으로 확산 억제 효과가 사라졌다.`,{source:s.actionContext?.actorId,stat:"spread",delta:-actual,tone:actual?"recover":"warning"});}
+  function lowerSpread(s,amount){const before=s.spread,actual=adjustedAmount(s,amount,"pressure");s.spread=Math.max(0,s.spread-actual);if(actual)narration(s,"바닥 틈을 메우던 검은 거품이 위생선 안쪽으로 밀려나며 얇아진다.",{tone:"recover"});else narration(s,"검은 막이 방금 닫은 틈의 모양을 흉내 내며 그대로 버틴다.",{tone:"warning"});effect(s,actual?`확산도 -${actual} · ${s.spread}`:"확산 억제 무효",{source:s.actionContext?.actorId,stat:"spread",delta:-actual,tone:actual?"recover":"warning"});}
   function addProgress(s,amount=1){
     const max=s.stage===1&&s.priority?E.priorities[s.priority].primaryNeeded:E.stages[s.stage].needed;
-    const adjusted=adjustedAmount(s,amount,"progress"),boost=s.reserveBoost>0?1:0;if(boost){s.reserveBoost--;effect(s,"후방에 비축한 개입이 이번 작업을 한 단계 더 밀었다.",{source:"josangmin",stat:"reserveBoost",delta:-1});}
-    s.progress=Math.min(max,s.progress+adjusted+boost);effect(s,adjusted+boost?`${objectiveInfo(s).primaryLabel} ${s.progress}/${max}.`:`현상이 같은 작업을 학습해 목표가 진행되지 않았다.`,{source:s.actionContext?.actorId,stat:"progress",delta:adjusted+boost,tone:adjusted+boost?"progress":"warning"});
+    const adjusted=adjustedAmount(s,amount,"progress"),boost=s.reserveBoost>0?1:0;if(boost){s.reserveBoost--;effect(s,"비축 개입 사용",{source:"josangmin",stat:"reserveBoost",delta:-1});}
+    s.progress=Math.min(max,s.progress+adjusted+boost);effect(s,adjusted+boost?`${objectiveInfo(s).primaryLabel} ${s.progress}/${max}`:"주 목표 진전 없음",{source:s.actionContext?.actorId,stat:"progress",delta:adjusted+boost,tone:adjusted+boost?"progress":"warning"});
   }
-  function addSecondary(s,amount=1){const p=E.priorities[s.priority],adjusted=adjustedAmount(s,amount,"progress");s.secondary=Math.min(p.secondaryNeeded,s.secondary+adjusted);effect(s,adjusted?`${p.secondaryLabel} ${s.secondary}/${p.secondaryNeeded}.`:`현상이 같은 작업을 학습해 보조 목표가 진행되지 않았다.`,{source:s.actionContext?.actorId,stat:"secondary",delta:adjusted,tone:adjusted?"progress":"warning"});}
+  function addSecondary(s,amount=1){const p=E.priorities[s.priority],adjusted=adjustedAmount(s,amount,"progress");s.secondary=Math.min(p.secondaryNeeded,s.secondary+adjusted);effect(s,adjusted?`${p.secondaryLabel} ${s.secondary}/${p.secondaryNeeded}`:"보조 목표 진전 없음",{source:s.actionContext?.actorId,stat:"secondary",delta:adjusted,tone:adjusted?"progress":"warning"});}
   function objectiveInfo(s){
     if(s.stage===0)return{primaryLabel:"오염 경로 분류",primaryNeeded:E.stages[0].needed};
     if(s.stage===1&&s.priority)return E.priorities[s.priority];
@@ -100,23 +100,23 @@ window.CafeteriaEngine = (() => {
     if(!stageComplete(s))return false;
     if(s.stage===1)captureOutcomes(s);
     if(s.stage===2){s.phase="success";narration(s,"세 경로의 압력 이동이 멎고 급식동 봉쇄선이 닫혔다.",{tone:"success"});return true;}
-    s.phase="interlude";narration(s,`${E.stages[s.stage].title} 대응을 마쳤다.`,{tone:"transition"});return true;
+    s.phase="interlude";narration(s,s.stage===0?"배수구에서 솟던 거품 줄기가 가늘어지고, 복도와 창고로 갈라진 흔적이 드러난다.":"조리원과 식자재의 이동이 끝나자 남은 거품이 세 경로로 몰린다.",{tone:"transition"});return true;
   }
-  function fail(s,reason){s.phase="failure";s.failureReason=reason;effect(s,reason,{stat:"failure",tone:"danger"});}
+  function fail(s,reason){s.phase="failure";s.failureReason=reason;narration(s,reason,{tone:"danger"});effect(s,"대응 실패",{stat:"failure",tone:"danger"});}
   function checkFailure(s){
     if(aliveIds(s).length===0){fail(s,"출전 인원이 모두 전투 불능이 되어 급식동에서 철수했다.");return true;}
     if(s.time<=0){fail(s,"대응 시간이 소진되어 봉쇄선을 포기하고 철수했다.");return true;}
     if(s.spread>=E.rules.failureSpread){fail(s,"확산도가 통제 한계에 도달해 급식동에서 철수했다.");return true;}
     return false;
   }
-  function setBlock(s,sourceId,type,label){s.blockEffect={sourceId,type,label};effect(s,`${label}이 다음 확산 반동을 막을 준비를 마쳤다.`,{source:sourceId,stat:"block",tone:"guard"});}
+  function setBlock(s,sourceId,type,label){s.blockEffect={sourceId,type,label};effect(s,`${label} · 반동 차단 대기`,{source:sourceId,stat:"block",tone:"guard"});}
   function endRound(s){
     s.time--;
-    if(s.blockEffect){const blocked=s.blockEffect;s.blockEffect=null;narration(s,`${blocked.label} 앞에서 검은 거품의 파도가 갈라진다.`,{accent:blocked.sourceId});effect(s,`라운드 말 확산과 침식 반동을 차단했다.`,{source:blocked.sourceId,stat:"block",tone:"guard"});}
+    if(s.blockEffect){const blocked=s.blockEffect;s.blockEffect=null;narration(s,`${blocked.label} 앞에서 검은 거품의 파도가 갈라져 배수구 쪽으로 되밀린다.`,{accent:blocked.sourceId});effect(s,"확산·침식 반동 차단",{source:blocked.sourceId,stat:"block",tone:"guard"});}
     else{
       s.spread++;
-      narration(s,"봉쇄되지 않은 거품이 바닥 경계를 넘어 번진다.",{tone:"danger"});effect(s,`확산도 +1. 현재 ${s.spread}.`,{stat:"spread",delta:1,tone:"danger"});
-      if(s.spread>=6){const exposed=aliveIds(s);exposed.forEach(id=>member(s,id).hp=Math.max(0,member(s,id).hp-1));effect(s,"고확산 반동으로 출전 인원 전원이 HP 1을 잃었다.",{stat:"hp",delta:-1,tone:"damage"});exposed.filter(id=>member(s,id).hp===0).forEach(id=>effect(s,`${subject(character(id).name)} 전투 불능이 됐다.`,{source:id,stat:"incapacitated",tone:"danger"}));}
+      narration(s,"봉쇄되지 않은 거품이 바닥 틈을 타고 복도 쪽으로 한 줄 더 번진다.",{tone:"danger"});effect(s,`확산도 +1 · ${s.spread}`,{stat:"spread",delta:1,tone:"danger"});
+      if(s.spread>=6){const exposed=aliveIds(s);exposed.forEach(id=>member(s,id).hp=Math.max(0,member(s,id).hp-1));narration(s,"검은 거품이 바닥에서 일제히 튀어 올라 출전 인원의 팔다리를 후려친다.",{tone:"damage"});effect(s,"출전 인원 HP -1",{stat:"hp",delta:-1,tone:"damage"});exposed.filter(id=>member(s,id).hp===0).forEach(id=>effect(s,`${subject(character(id).name)} 전투 불능`,{source:id,stat:"incapacitated",tone:"danger"}));}
     }
     s.partyIds.forEach(id=>{if(member(s,id).cool>0)member(s,id).cool--;});s.round++;
     if(!checkFailure(s))buildOrder(s);
@@ -191,17 +191,17 @@ window.CafeteriaEngine = (() => {
   const ABILITY_RESOLVERS={
     absorbThreat(s,m){lowerSpread(s,2);m.heat++;},
     blockRisk(s,m,a,cid){setBlock(s,cid,a.id,a.id==="distributed"?"화영의 분산 방호":"이난의 저체온 구역");},
-    gatherIntel(s,m){m.info++;effect(s,`현장 정보 ${m.info} 확보.`,{source:"kang-unshim",stat:"info",delta:1});},
+    gatherIntel(s,m){m.info++;effect(s,`현장 정보 +1 · ${m.info}`,{source:"kang-unshim",stat:"info",delta:1});},
     swingSituation(s,m){addProgress(s,2);s.spread+=2;},
-    storeMomentum(s){s.time++;s.traceUsed=true;effect(s,`남은 대응 시간 +1. 현재 ${s.time}라운드.`,{source:"kang-unshim",stat:"time",delta:1});},
-    snapshotState(s,m){m.memory++;effect(s,`보존 장면 ${m.memory} 확보.`,{source:"epi-minos",stat:"memory",delta:1});},
+    storeMomentum(s){s.time++;s.traceUsed=true;effect(s,`남은 시간 +1 · ${s.time}`,{source:"kang-unshim",stat:"time",delta:1});},
+    snapshotState(s,m){m.memory++;effect(s,`보존 장면 +1 · ${m.memory}`,{source:"epi-minos",stat:"memory",delta:1});},
     restoreState(s){lowerSpread(s,1);addProgress(s,1);},
     stabilizeField(s,m,a,cid){if(a.mode==="block")setBlock(s,cid,a.id,"이난의 저체온 구역");else{lowerSpread(s,2);m.cool=2;}},
     analyze(s,m){lowerSpread(s,1);addProgress(s,1);m.cool=2;},
     unlockRoute(s){s.prediction=true;s.predictedChain=true;},
-    declareRule(s,m,a,cid){m.rules--;setBlock(s,cid,a.id,"마근아의 통행 규정");effect(s,`남은 집행 ${m.rules}회.`,{source:cid,stat:"rules",delta:-1});},
-    purify(s,m,a,cid){lowerSpread(s,3);m.hp=Math.max(0,m.hp-a.hpCost);m.cool=2;narration(s,"장갑 안쪽으로 검은 얼룩이 번지고 손끝이 잠시 굳는다.",{accent:cid,tone:"damage"});effect(s,`${subject(character(cid).name)} 침식으로 HP ${a.hpCost}을 잃었다. (${m.hp} HP)`,{source:cid,stat:"hp",delta:-a.hpCost,tone:"damage"});if(m.hp===0)effect(s,`${subject(character(cid).name)} 전투 불능이 됐다.`,{source:cid,stat:"incapacitated",tone:"danger"});},
-    conserveAction(s,m){m.effort++;effect(s,`비축 행동 ${m.effort} 확보.`,{source:"josangmin",stat:"effort",delta:1});},
+    declareRule(s,m,a,cid){m.rules--;setBlock(s,cid,a.id,"마근아의 통행 규정");effect(s,`집행 ${m.rules}회`,{source:cid,stat:"rules",delta:-1});},
+    purify(s,m,a,cid){lowerSpread(s,3);m.hp=Math.max(0,m.hp-a.hpCost);m.cool=2;narration(s,"장갑 안쪽으로 검은 얼룩이 번지고 손끝이 잠시 굳는다.",{accent:cid,tone:"damage"});effect(s,`${character(cid).name} HP -${a.hpCost} · ${m.hp}`,{source:cid,stat:"hp",delta:-a.hpCost,tone:"damage"});if(m.hp===0)effect(s,`${character(cid).name} 전투 불능`,{source:cid,stat:"incapacitated",tone:"danger"});},
+    conserveAction(s,m){m.effort++;effect(s,`비축 +1 · ${m.effort}`,{source:"josangmin",stat:"effort",delta:1});},
     decisiveIntervention(s,m,a){if(a.mode==="progress")addProgress(s,2);else lowerSpread(s,3);}
   };
   function payAbility(m,a){if(a.cost)Object.entries(a.cost).forEach(([key,value])=>m[key]-=value);}
@@ -210,22 +210,22 @@ window.CafeteriaEngine = (() => {
     const selected=id.endsWith("staff")?"staff":"supplies";if(!priorityAvailable(s,selected))return false;s.priority=selected;const p=E.priorities[s.priority];s.time=p.time+(s.clues.includes("timing")?1:0);
     if(s.priority==="staff"&&s.clues.includes("testimony"))s.progress=1;
     if(s.priority==="supplies"&&s.clues.includes("sanitation"))s.spread=Math.max(0,s.spread-1);
-    narration(s,s.priority==="staff"?"비상문 쪽 유도등이 켜지고 창고 셔터가 뒤로 밀린다.":"창고 무균선이 닫히고 조리원 대피 표지가 짧게 점멸한다.",{tone:"decision"});effect(s,`${p.label} 선택. ${p.description}`,{stat:"priority",value:s.priority});
+    narration(s,s.priority==="staff"?"비상문 쪽 유도등이 켜지고 창고 셔터가 뒤로 밀린다.":"창고 무균선이 닫히고 조리원 대피 표지가 짧게 점멸한다.",{tone:"decision"});effect(s,`${p.label} 선택`,{stat:"priority",value:s.priority});
     const lines=s.priority==="staff"?E.dialogue.priorityStaff:E.dialogue.prioritySupplies;
     lines.filter(x=>s.partyIds.includes(x.id)||s.supportId===x.id).forEach(x=>dialogue(s,x.text,character(x.id).name,{accent:x.id}));
     return true;
   }
-  function prepareRoute(s,index){const route=s.routes[index];if(!route||route.sealed||route.prepared)return false;route.prepared=true;narration(s,`${route.label} 양쪽에 고정 장치가 맞물린다.`,{tone:"guard"});effect(s,`${route.label} 사전 고정 완료. 봉쇄 반동 -1.`,{stat:"routePrepared",source:route.id});return true;}
+  function prepareRoute(s,index){const route=s.routes[index];if(!route||route.sealed||route.prepared)return false;route.prepared=true;narration(s,`${route.label} 양쪽에 고정 장치가 맞물리고 흔들리던 배관이 멎는다.`,{tone:"guard"});effect(s,`${route.label} 준비 · 봉쇄 반동 -1`,{stat:"routePrepared",source:route.id});return true;}
   function sealRoute(s,index){
     const route=s.routes[index];if(!route||route.sealed)return false;
     let risk=route.currentRisk-(route.prepared?1:0)-(s.prediction?1:0)-(s.safeSeal>0?1:0);risk=Math.max(0,risk);
-    if(s.prediction){s.prediction=false;s.predictedChain=null;effect(s,"예측 경로가 봉쇄 반동을 1 줄였다.",{source:"kim-wooju",stat:"routeRisk",delta:-1});}
-    if(s.safeSeal>0){s.safeSeal--;effect(s,"사전 조사·후방 지원의 안전 봉쇄 기회를 사용했다.",{stat:"safeSeal",delta:-1});}
-    if(s.reserveBoost>0){s.reserveBoost--;risk=Math.max(0,risk-1);effect(s,"비축된 최소 개입이 봉쇄 반동을 1 더 줄였다.",{source:"josangmin",stat:"routeRisk",delta:-1});}
+    if(s.prediction){s.prediction=false;s.predictedChain=null;narration(s,"우주의 표시선을 따라 압력이 튈 지점을 먼저 조인다.",{accent:"kim-wooju"});effect(s,"봉쇄 반동 -1",{source:"kim-wooju",stat:"routeRisk",delta:-1});}
+    if(s.safeSeal>0){s.safeSeal--;narration(s,"미리 그어 둔 위생선이 튀어 오르던 압력을 한 번 받아낸다.",{tone:"guard"});effect(s,"안전 봉쇄 사용",{stat:"safeSeal",delta:-1});}
+    if(s.reserveBoost>0){s.reserveBoost--;risk=Math.max(0,risk-1);narration(s,"상민이 남겨 둔 고정핀 하나가 마지막 흔들림을 붙든다.",{accent:"josangmin"});effect(s,"봉쇄 반동 -1",{source:"josangmin",stat:"routeRisk",delta:-1});}
     route.sealed=true;s.routeOrder.push(route.id);s.spread+=risk;s.progress++;
-    narration(s,`${route.label}의 검은 흐름이 끊기고 표시등이 녹색으로 바뀐다.`,{tone:"success"});effect(s,`${route.label} 봉쇄 완료. 확산 +${risk}. (${s.progress}/${E.stages[2].needed})`,{source:route.id,stat:"spread",delta:risk,tone:risk?"warning":"success"});
+    narration(s,`${route.label}의 검은 흐름이 끊기고 표시등이 녹색으로 바뀐다.`,{tone:"success"});effect(s,`${route.label} 봉쇄 · 확산도 +${risk} · ${s.progress}/${E.stages[2].needed}`,{source:route.id,stat:"spread",delta:risk,tone:risk?"warning":"success"});
     const target=s.routes.find(x=>x.id===route.agitates);
-    if(target&&!target.sealed){target.currentRisk+=2;narration(s,`막힌 거품이 방향을 틀어 ${target.label} 쪽으로 솟구친다.`,{tone:"danger"});effect(s,`${target.label} 봉쇄 위험 +2.`,{source:route.id,stat:"routeRisk",delta:2,tone:"danger"});}
+    if(target&&!target.sealed){target.currentRisk+=2;narration(s,`막힌 거품이 방향을 틀어 ${target.label} 쪽으로 솟구친다.`,{tone:"danger"});effect(s,`${target.label} 봉쇄 위험 +2`,{source:route.id,stat:"routeRisk",delta:2,tone:"danger"});}
     return true;
   }
   function actionCategory(id,ability){
@@ -235,10 +235,10 @@ window.CafeteriaEngine = (() => {
   function beginActionResolution(s,id,ability,actorId){const previous=s.actionMemory[actorId],repeat=previous?.id===id?previous.repeat+1:1,category=actionCategory(id,ability);s.actionMemory[actorId]={id,repeat};s.lastActionId=id;s.lastActionActorId=actorId;s.repeatCount=repeat;s.actionContext={id,repeat,category,actorId};return s.actionContext;}
   function applyPhenomenonReaction(s,context){
     if(context.category==="decision")return;
-    if(context.repeat>=2){s.spread++;narration(s,"검은 막이 방금 전 움직임을 흉내 내며 대응을 비껴간다.",{tone:"danger"});effect(s,`반복 행동 학습: 확산 +1.`,{stat:"spread",delta:1,tone:"danger"});}
+    if(context.repeat>=2){s.spread++;narration(s,"검은 막이 방금 전 움직임을 흉내 내며 대응을 비껴간다.",{tone:"danger"});effect(s,"반복 노출 · 확산도 +1",{stat:"spread",delta:1,tone:"danger"});}
     const current=pattern(s);
-    if(current.id==="surge"&&["progress","hybrid","seal"].includes(context.category)){s.spread++;narration(s,"목표 지점의 틈을 타 검은 거품이 한 칸 더 기어오른다.",{tone:"warning"});effect(s,"역류 가속: 확산 +1.",{stat:"spread",delta:1,tone:"warning"});}
-    if(current.id==="hunger"&&["resource","setup"].includes(context.category)){s.spread++;narration(s,"준비하는 사이 거품이 비어 있는 경로를 삼킨다.",{tone:"warning"});effect(s,"경로 포식: 확산 +1.",{stat:"spread",delta:1,tone:"warning"});}
+    if(current.id==="surge"&&["progress","hybrid","seal"].includes(context.category)){s.spread++;narration(s,"목표 지점의 틈을 타 검은 거품이 한 칸 더 기어오른다.",{tone:"warning"});effect(s,"역류 가속 · 확산도 +1",{stat:"spread",delta:1,tone:"warning"});}
+    if(current.id==="hunger"&&["resource","setup"].includes(context.category)){s.spread++;narration(s,"준비하는 사이 거품이 비어 있는 경로를 삼킨다.",{tone:"warning"});effect(s,"경로 포식 · 확산도 +1",{stat:"spread",delta:1,tone:"warning"});}
   }
   function act(s,id){
     if(s.phase!=="battle")return false;
@@ -262,13 +262,13 @@ window.CafeteriaEngine = (() => {
 
   const SUPPORT_RESOLVERS={
     blockRisk(s,a,id){setBlock(s,id,a.verb,a.sourceLabel);},
-    swingSituation(s){if(s.stage===2){s.safeSeal++;effect(s,"다음 봉쇄에 쓸 현장 제보 동선을 확보했다.",{source:"kang-unshim",stat:"safeSeal",delta:1});}else{addProgress(s,1);s.spread++;effect(s,`화제가 번진 만큼 확산도도 +1. 현재 ${s.spread}.`,{source:"kang-unshim",stat:"spread",delta:1,tone:"warning"});}},
-    restoreState(s){s.time++;effect(s,`되감은 장면이 대응 시간 1라운드를 되돌렸다. 현재 ${s.time}라운드.`,{source:"epi-minos",stat:"time",delta:1});},
+    swingSituation(s){if(s.stage===2){s.safeSeal++;effect(s,"제보 동선 · 안전 봉쇄 +1",{source:"kang-unshim",stat:"safeSeal",delta:1});}else{addProgress(s,1);s.spread++;narration(s,"운심의 제보가 사람들을 움직이는 동안 거품도 열린 통로를 따라 번진다.",{accent:"kang-unshim",tone:"warning"});effect(s,`확산도 +1 · ${s.spread}`,{source:"kang-unshim",stat:"spread",delta:1,tone:"warning"});}},
+    restoreState(s){s.time++;narration(s,"카오가 삼킨 장면이 펼쳐지고, 직전에 닫힌 통로가 잠시 다시 열린다.",{accent:"epi-minos"});effect(s,`남은 시간 +1 · ${s.time}`,{source:"epi-minos",stat:"time",delta:1});},
     stabilizeField(s,a){lowerSpread(s,a.amount);},
-    unlockRoute(s){s.safeSeal++;effect(s,"다음 봉쇄에 쓸 안전 진입로를 확보했다.",{source:"kim-wooju",stat:"safeSeal",delta:1});},
-    declareRule(s,a,id){const m=member(s,id);m.rules-=a.ruleCost;setBlock(s,id,a.verb,a.sourceLabel);effect(s,`남은 집행 ${m.rules}회.`,{source:id,stat:"rules",delta:-a.ruleCost});},
+    unlockRoute(s){s.safeSeal++;effect(s,"안전 진입로 +1",{source:"kim-wooju",stat:"safeSeal",delta:1});},
+    declareRule(s,a,id){const m=member(s,id);m.rules-=a.ruleCost;setBlock(s,id,a.verb,a.sourceLabel);effect(s,`집행 ${m.rules}회`,{source:id,stat:"rules",delta:-a.ruleCost});},
     purify(s,a){lowerSpread(s,a.amount);},
-    conserveAction(s){s.reserveBoost++;effect(s,"다음 목표 작업 또는 봉쇄에 쓸 최소 개입을 비축했다.",{source:"josangmin",stat:"reserveBoost",delta:1});}
+    conserveAction(s){s.reserveBoost++;effect(s,"최소 개입 비축 +1",{source:"josangmin",stat:"reserveBoost",delta:1});}
   };
   function supportStatus(s){
     const id=s.supportId,a=E.supportAdapters[id],m=member(s,id);if(s.phase!=="battle")return{available:false,reason:"전투 구간이 아니다."};if(!a)return{available:false,reason:"지원 효과가 없다."};if(s.supportUsed)return{available:false,reason:"이 구간에는 이미 지원을 요청했다."};if(s.supportUses<=0)return{available:false,reason:"사건 전체 지원 횟수를 소진했다."};if(a.stages&&!a.stages.includes(s.stage))return{available:false,reason:"이 지원은 마지막 봉쇄 구간에서만 사용할 수 있다."};if(a.minSpread&&s.spread<a.minSpread)return{available:false,reason:`확산 ${a.minSpread} 이상에서 사용할 수 있다.`};if(a.maxTime&&s.time>a.maxTime)return{available:false,reason:`남은 시간 ${a.maxTime} 이하에서 사용할 수 있다.`};if(a.minTime&&s.time<a.minTime)return{available:false,reason:`남은 시간 ${a.minTime} 이상이 필요하다.`};if(a.ruleCost&&m.rules<a.ruleCost)return{available:false,reason:"남은 집행 횟수가 없다."};if(["blockRisk","declareRule"].includes(a.verb)&&s.blockEffect)return{available:false,reason:"이미 차단 효과가 대기 중이다."};return{available:true,reason:"사용 가능"};
@@ -277,8 +277,8 @@ window.CafeteriaEngine = (() => {
     const status=supportStatus(s);if(!status.available)return false;
     const id=s.supportId,a=E.supportAdapters[id],m=member(s,id);s.supportUsed=true;s.supportUses--;
     narration(s,`${character(id).name}의 후방 회선이 현장에 연결된다.`,{accent:id,tone:"support"});dialogue(s,character(id).support.quote,`${character(id).name} · 후방`,{accent:id});
-    if(a.spreadCost){s.spread+=a.spreadCost;effect(s,`지원 반동으로 확산도 +${a.spreadCost}. 현재 ${s.spread}.`,{source:id,stat:"spread",delta:a.spreadCost,tone:"warning"});}
-    if(a.timeCost){s.time-=a.timeCost;effect(s,`지원 준비로 대응 시간 ${a.timeCost}라운드를 사용했다. 현재 ${s.time}라운드.`,{source:id,stat:"time",delta:-a.timeCost,tone:"warning"});}
+    if(a.spreadCost){s.spread+=a.spreadCost;narration(s,"후방 회선이 열리는 사이 검은 거품이 비어 있는 바닥 틈으로 번진다.",{tone:"warning"});effect(s,`확산도 +${a.spreadCost} · ${s.spread}`,{source:id,stat:"spread",delta:a.spreadCost,tone:"warning"});}
+    if(a.timeCost){s.time-=a.timeCost;narration(s,"지원 장비가 도착할 때까지 봉쇄조의 움직임이 잠시 멈춘다.",{tone:"warning"});effect(s,`남은 시간 -${a.timeCost} · ${s.time}`,{source:id,stat:"time",delta:-a.timeCost,tone:"warning"});}
     SUPPORT_RESOLVERS[a.verb](s,a,id);clampSpread(s);if(!checkFailure(s))finishStage(s);return true;
   }
   function takePresentation(s){const queued=s.presentation.slice();s.presentation.length=0;return queued;}

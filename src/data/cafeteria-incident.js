@@ -49,9 +49,9 @@ window.SEONGA_CAFETERIA_EVENT = {
     {id:"vent",label:"창고 환풍구",risk:3,agitates:"cart"}
   ],
   patterns:[
-    {id:"surge",label:"역류 가속",description:"목표 진행·복합 행동·봉쇄는 확산을 1 더 일으킨다."},
-    {id:"coagulation",label:"응고막",description:"압력 감소·복합 행동의 확산 억제량이 1 줄어든다."},
-    {id:"hunger",label:"경로 포식",description:"정보·장면·행동 비축과 사전 고정은 확산을 1 일으킨다."}
+    {id:"surge",label:"역류 가속",description:"손댄 틈으로 거품이 더 빠르게 솟는다. · 확산도 +1"},
+    {id:"coagulation",label:"응고막",description:"굳은 막이 차단 압력을 흘려낸다. · 확산 억제량 -1"},
+    {id:"hunger",label:"경로 포식",description:"준비하는 사이 거품이 빈 경로를 삼킨다. · 확산도 +1"}
   ],
   abilities: {
     hwayoung:[

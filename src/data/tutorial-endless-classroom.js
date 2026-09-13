@@ -53,9 +53,9 @@ window.SEONGA_TUTORIAL_EVENT = {
     "칠판의 마지막 문장이 완성되며 반복 신호가 꺼진다. 그 순간 천장의 스피커가 마지막 종을 준비하고, 열린 문이 다시 좁아지기 시작한다."
   ],
   patterns: [
-    { id:"recitation", label:"복창 증폭", description:"목표 진행·복합 행동을 쓰면 현상 압력이 1 오른다." },
-    { id:"fixation", label:"시선 고정", description:"학생 보호 행동을 쓰면 현상이 사용자를 포착해 압력이 1 오른다." },
-    { id:"counterpulse", label:"역류 반동", description:"압력 감소·복합 행동을 쓰면 행동자가 HP 1을 잃는다." }
+    { id:"recitation", label:"복창 증폭", description:"칠판에 손댈 때마다 학생들의 복창이 커진다. · 현상 압력 +1" },
+    { id:"fixation", label:"시선 고정", description:"학생을 붙들면 교실의 시선이 행동자에게 몰린다. · 현상 압력 +1" },
+    { id:"counterpulse", label:"역류 반동", description:"현상을 누른 힘이 행동자의 몸으로 되튄다. · 행동자 HP -1" }
   ],
   rules: { partySize:4, dangerStage:3, pressureEscalateAt:4, investigationLimit:3, supportCharges:2 }
 };

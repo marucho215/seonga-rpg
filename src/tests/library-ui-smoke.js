@@ -10,7 +10,7 @@ const click=action=>app.handler({target:{dataset:{action},parentElement:app}});
 assert.match(app.innerHTML,/도서관에 데려갈 네 명/);click("briefing");click("begin-explore");
 click("select-location:search-terminal");click("investigate:search-wooju");click("interaction:apply");
 click("select-location:exit");click("investigate:exit-hwayoung");
-assert.match(app.innerHTML,/판정 가능/);assert.match(app.innerHTML,/충돌 관측/);assert.match(app.innerHTML,/현재 주장 · 서측 서가/);
+assert.match(app.innerHTML,/판단 가능/);assert.match(app.innerHTML,/충돌 관측/);assert.match(app.innerHTML,/현재 주장 · 서측 서가/);
 click("select-location:mina-desk");click("investigate:desk-epi");click("start");
 assert.match(app.innerHTML,/북측 비상구를 원본으로 판정/);assert.match(app.innerHTML,/판단 보류/);
 assert.match(app.innerHTML,/AUDIT/);assert.match(app.innerHTML,/고정 순서 없음/);
