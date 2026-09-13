@@ -1,0 +1,27 @@
+"use strict";
+
+const assert=require("node:assert/strict");
+global.window=global;
+let saved=null;
+global.localStorage={getItem(){return saved;},setItem(key,value){saved=value;}};
+require("../data/campaign.js");
+require("../data/characters.js");
+require("../data/tutorial-endless-classroom.js");
+require("../data/neutral-abilities.js");
+require("../data/cafeteria-incident.js");
+require("../data/library-incident.js");
+
+assert.deepEqual(CampaignProgress.unlockedCharacterIds(),["hwayoung","kang-unshim","epi-minos","inan","kim-wooju"]);
+CampaignProgress.complete("endless-classroom","테스트 완료");
+assert.deepEqual(CampaignProgress.unlockedCharacterIds(),["hwayoung","kang-unshim","epi-minos","inan","kim-wooju","mageuna","byeon-ari","josangmin"]);
+assert.deepEqual(SEONGA_TUTORIAL_EVENT.characterPool,["hwayoung","kang-unshim","epi-minos","inan","kim-wooju"]);
+assert.deepEqual(SEONGA_CAFETERIA_EVENT.characterPool,["hwayoung","kang-unshim","epi-minos","inan","kim-wooju","mageuna","byeon-ari","josangmin"]);
+assert.equal(SEONGA_CAFETERIA_EVENT.characterPool.length,8);
+assert.equal(CampaignProgress.isUnlocked("library-reality-audit"),false);
+CampaignProgress.complete("cafeteria-containment","두 번째 사건 테스트 완료");
+assert.equal(CampaignProgress.isUnlocked("library-reality-audit"),true);
+assert.deepEqual(SEONGA_LIBRARY_EVENT.characterPool,SEONGA_CAFETERIA_EVENT.characterPool);
+CampaignProgress.complete("library-reality-audit","세 번째 사건 테스트 완료");
+assert.ok(CampaignProgress.unlockedCharacterIds().includes("jegal-mina"));
+assert.ok(!SEONGA_LIBRARY_EVENT.characterPool.includes("jegal-mina"));
+console.log(JSON.stringify({initial:CampaignProgress.rosterUnlocks.initial,afterFirst:CampaignProgress.rosterUnlocks["endless-classroom"],afterThird:CampaignProgress.rosterUnlocks["library-reality-audit"],tutorialPool:SEONGA_TUTORIAL_EVENT.characterPool,cafeteriaPool:SEONGA_CAFETERIA_EVENT.characterPool,libraryPool:SEONGA_LIBRARY_EVENT.characterPool},null,2));

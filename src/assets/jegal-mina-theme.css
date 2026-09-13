@@ -1,0 +1,21 @@
+/* 제갈 미나 character palette / user-supplied cross-star icon */
+.accent-jegal-mina{
+  --char-ink:#35558a;
+  --char-accent:#4c7fff;
+  --char-soft:#e9efff;
+  --char-special:#9fcf55;
+}
+
+/* Incident 03 NPC panels adopt the same personal-color vocabulary. */
+.mina-notice.accent-jegal-mina,
+.mina-status.accent-jegal-mina{
+  border-left-color:var(--char-accent);
+  background:var(--char-soft);
+}
+.mina-notice.accent-jegal-mina strong,
+.mina-status.accent-jegal-mina strong{
+  color:var(--char-ink);
+}
+
+/* The supplied star is visually dense enough that a slightly lighter watermark reads better. */
+.character-card.accent-jegal-mina .hub-character-watermark{opacity:.065}

@@ -1,0 +1,47 @@
+성아여고 character icon credits
+
+Noun Project / CC BY 3.0
+
+ECG by murmur from Noun Project
+https://thenounproject.com/browse/icons/term/ecg/
+(CC BY 3.0)
+Used for: 이난
+
+Crow by Kim Sun Young from Noun Project
+https://thenounproject.com/browse/icons/term/crow/
+(CC BY 3.0)
+Used for: 에피 미노스
+
+Medical cross by TMD from Noun Project
+https://thenounproject.com/browse/icons/term/medical-cross/
+(CC BY 3.0)
+Used for: 화영
+
+broom by another_one from Noun Project
+https://thenounproject.com/browse/icons/term/broom/
+(CC BY 3.0)
+Used for: 변아리
+
+Gear by Aya Sofya from Noun Project
+https://thenounproject.com/browse/icons/term/gear/
+(CC BY 3.0)
+Used for: 마근아
+
+claw by Widyatmoko from Noun Project
+https://thenounproject.com/browse/icons/term/claw/
+(CC BY 3.0)
+Used for: 조상민
+
+Additional supplied icons
+- 강운심 icon
+- 김우주 icon
+
+No attribution text was supplied for these two files in this patch. Keep the original license/source records with the project.
+
+All icon files in this patch use the user-provided recolored versions.
+
+sparkle by Styfico from Noun Project
+https://thenounproject.com/browse/icons/term/sparkle/
+(CC BY 3.0)
+Used for: 제갈 미나
+
