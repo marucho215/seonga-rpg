@@ -1,0 +1,53 @@
+name: Deploy mobile web build
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check JavaScript syntax
+        run: find src -name '*.js' -print0 | xargs -0 -n1 node --check
+      - name: Run Incident 01-04 regression tests
+        run: node src/tests/run-all.js
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare public game files
+        run: |
+          mkdir _site
+          rsync -a src/ _site/ \
+            --exclude 'tests/' \
+            --exclude 'debug.html' \
+            --exclude 'debug-app.js' \
+            --exclude 'debug-adapters.js' \
+            --exclude '*.txt'
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
