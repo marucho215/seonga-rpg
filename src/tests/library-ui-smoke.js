@@ -5,9 +5,9 @@ global.window=global;global.SEONGA_TEST_INSTANT_PRESENTATION=true;let saved=JSON
 global.localStorage={getItem(){return saved;},setItem(key,value){saved=value;}};
 const app={innerHTML:"",handler:null,addEventListener(type,handler){this.handler=handler;}};global.document={querySelector(){return app;}};
 require("../data/campaign.js");require("../data/characters.js");require("../data/neutral-abilities.js");require("../data/library-incident.js");require("../library-engine.js");require("../ui-common.js");require("../library-app.js");
-const click=action=>app.handler({target:{dataset:{action},parentElement:app}});
+const click=action=>{const button={dataset:{action},parentElement:app};app.handler({target:{dataset:{},parentElement:button}});};
 
-assert.match(app.innerHTML,/도서관에 데려갈 네 명/);click("briefing");click("begin-explore");
+assert.match(app.innerHTML,/도서관에 데려갈 네 명/);click("toggle:hwayoung");assert.match(app.innerHTML,/CURRENT UNIT · 3\/4/);click("toggle:epi-minos");assert.match(app.innerHTML,/CURRENT UNIT · 4\/4/);click("briefing");click("begin-explore");
 click("select-location:search-terminal");click("investigate:search-wooju");click("interaction:apply");
 click("select-location:exit");click("investigate:exit-hwayoung");
 assert.match(app.innerHTML,/판단 가능/);assert.match(app.innerHTML,/충돌 관측/);assert.match(app.innerHTML,/현재 주장 · 서측 서가/);

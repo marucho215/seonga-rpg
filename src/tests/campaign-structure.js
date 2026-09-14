@@ -13,7 +13,9 @@ require("../data/library-incident.js");
 require("../data/magnum-incident.js");
 
 assert.deepEqual(CampaignProgress.eventCatalog.map(x=>x.id),["endless-classroom","cafeteria-containment","library-reality-audit","magnum-mirroring-incident"]);
+for(const event of [SEONGA_TUTORIAL_EVENT,SEONGA_CAFETERIA_EVENT,SEONGA_LIBRARY_EVENT,SEONGA_MAGNUM_EVENT])assert.ok(CampaignProgress.eventInfo(event.id),`${event.id} 데이터 ID는 캠페인 카탈로그와 연결되어야 한다.`);
 assert.deepEqual(CampaignProgress.unlockedCharacterIds(),["hwayoung","kang-unshim","epi-minos","inan","kim-wooju"]);
+CampaignProgress.complete(SEONGA_TUTORIAL_EVENT.id);assert.deepEqual(CampaignProgress.load().completed,["endless-classroom"],"사건 데이터 ID로 완료해도 정규 ID를 저장해야 한다.");
 CampaignProgress.complete("endless-classroom","테스트 완료");
 assert.deepEqual(CampaignProgress.unlockedCharacterIds(),["hwayoung","kang-unshim","epi-minos","inan","kim-wooju","mageuna","byeon-ari","josangmin"]);
 assert.deepEqual(SEONGA_TUTORIAL_EVENT.characterPool,["hwayoung","kang-unshim","epi-minos","inan","kim-wooju"]);
@@ -34,5 +36,6 @@ assert.ok(!SEONGA_MAGNUM_EVENT.characterPool.includes("magnum"));
 assert.equal(Object.hasOwn(JSON.parse(saved),"records"),false,"사건 완료 시 대응 기록을 저장하지 않아야 한다.");
 saved=JSON.stringify({completed:["endless-classroom"],records:[{summary:"과거 기록"}]});
 assert.deepEqual(CampaignProgress.load(),{completed:["endless-classroom"]},"기존 세이브의 records는 무시해야 한다.");
+saved=JSON.stringify({completed:["tutorial-endless-classroom"]});assert.deepEqual(CampaignProgress.load(),{completed:["endless-classroom"]},"과거 별칭 ID도 정규 완료 기록으로 복구해야 한다.");
 saved="{broken";assert.deepEqual(CampaignProgress.load(),{completed:[]},"손상된 세이브는 빈 진행도로 복구해야 한다.");
 console.log(JSON.stringify({initial:CampaignProgress.rosterUnlocks.initial,afterFirst:CampaignProgress.rosterUnlocks["endless-classroom"],afterThird:CampaignProgress.rosterUnlocks["library-reality-audit"],afterFourth:CampaignProgress.rosterUnlocks["magnum-mirroring-incident"],tutorialPool:SEONGA_TUTORIAL_EVENT.characterPool,cafeteriaPool:SEONGA_CAFETERIA_EVENT.characterPool,libraryPool:SEONGA_LIBRARY_EVENT.characterPool,magnumPool:SEONGA_MAGNUM_EVENT.characterPool},null,2));

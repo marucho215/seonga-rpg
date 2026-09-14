@@ -14,9 +14,9 @@ window.CampaignProgress={
     "library-reality-audit":["jegal-mina"],
     "magnum-mirroring-incident":["magnum"]
   },
-  load(){try{const data=JSON.parse(localStorage.getItem(this.key))||{},completed=Array.isArray(data.completed)?data.completed:[];return{completed};}catch{return{completed:[]};}},
+  load(){try{const data=JSON.parse(localStorage.getItem(this.key))||{},raw=Array.isArray(data.completed)?data.completed:[],completed=raw.map(id=>this.canonicalEventId(id)).filter((id,index,all)=>all.indexOf(id)===index);return{completed};}catch{return{completed:[]};}},
   save(data){localStorage.setItem(this.key,JSON.stringify(data));},
-  complete(eventId){const data=this.load();if(!data.completed.includes(eventId))data.completed.push(eventId);this.save(data);},
+  complete(eventId){const canonicalId=this.canonicalEventId(eventId),data=this.load();if(!data.completed.includes(canonicalId))data.completed.push(canonicalId);this.save(data);},
   canonicalEventId(eventId){return this.eventAliases[eventId]||eventId;},
   eventInfo(eventId){const canonicalId=this.canonicalEventId(eventId);return this.eventCatalog.find(x=>x.id===canonicalId)||null;},
   isUnlocked(eventId){const info=this.eventInfo(eventId);return Boolean(info&&(!info.requires||this.load().completed.includes(info.requires)));},
