@@ -1,0 +1,7 @@
+"use strict";
+
+const assert=require("node:assert/strict");global.window=global;let writes=0,saved=JSON.stringify({completed:["endless-classroom","cafeteria-containment","library-reality-audit"]});global.localStorage={getItem(){return saved;},setItem(){writes++;}};
+require("../data/campaign.js");require("../data/characters.js");require("../data/neutral-abilities.js");require("../data/tutorial-endless-classroom.js");require("../data/cafeteria-incident.js");require("../data/library-incident.js");require("../data/magnum-incident.js");require("../engine.js");require("../cafeteria-engine.js");require("../library-engine.js");require("../magnum-engine.js");require("../debug-adapters.js");
+for(const [id,adapter] of Object.entries(SEONGA_DEBUG_ADAPTERS)){const state=adapter.create();assert.equal(state.phase,"party",`${id} 임시 상태 생성`);const location=adapter.event.investigations[0],choice=location.choices[0];assert.equal(adapter.applyInvestigation(state,location.id,choice.id),true,`${id} 개별 조사 보상 적용`);assert.equal(state.investigated.includes(location.id),true,`${id} 조사 장소 기록`);const battleState=adapter.create();adapter.enterBattle(battleState);assert.equal(battleState.phase,"battle",`${id} 전투 프리셋 진입`);assert.ok(adapter.metrics.length);}
+assert.equal(writes,0,"디버그 어댑터의 상태 조작은 캠페인 저장을 변경하지 않아야 한다.");
+console.log(JSON.stringify({incidents:Object.keys(SEONGA_DEBUG_ADAPTERS),temporaryStateOnly:true,storageWrites:writes},null,2));

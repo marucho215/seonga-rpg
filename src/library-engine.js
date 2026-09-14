@@ -3,6 +3,7 @@
 window.LibraryEngine=(()=>{
   const E=SEONGA_LIBRARY_EVENT,C=SEONGA_CHARACTERS;
   const character=id=>C.find(x=>x.id===id),member=(s,id)=>s.members[id],factIds=()=>Object.keys(E.facts);
+  const availableCharacterIds=()=>window.CampaignProgress?CampaignProgress.availableCharacterIds(E.id,E.characterPool):[...E.characterPool];
   const subject=name=>{const code=name.charCodeAt(name.length-1)-0xac00;return`${name}${code>=0&&code<=11171&&code%28!==0?"이":"가"}`;};
   function present(s,type,text,meta={}){const item={type,text,message:text,...meta};s.log.push(item);s.presentation.push(item);return item;}
   const dialogue=(s,text,speaker,meta={})=>present(s,"dialogue",text,{speaker,...meta});
@@ -15,8 +16,9 @@ window.LibraryEngine=(()=>{
 
   function create(){
     const members={};C.forEach(x=>members[x.id]={hp:x.game.hp,heat:0,info:0,memory:0,cool:0,effort:0,rules:SEONGA_NEUTRAL_KITS[x.id]?.limit||0});
+    const pool=availableCharacterIds(),supportId=pool.includes("mageuna")?"mageuna":pool.find(id=>!["hwayoung","kang-unshim","inan","kim-wooju"].includes(id))||"epi-minos";
     const facts={};factIds().forEach(id=>facts[id]={knowledge:"unknown",reality:"corrupted",current:E.facts[id].current,playerClaim:null,corruptionLevel:1,bias:0,lastTouched:0,claimEvidenceCount:0,recheckReady:false});
-    return{phase:"party",battlePhase:"audit",partyIds:["hwayoung","kang-unshim","inan","kim-wooju"],supportId:"mageuna",members,
+    return{phase:"party",battlePhase:"audit",partyIds:["hwayoung","kang-unshim","inan","kim-wooju"],supportId,members,
       evidence:{},investigated:[],selectedLocation:null,investigationsLeft:E.rules.investigationLimit,
       pendingInteractions:[],skippedInteractions:[],interactionState:{used:[]},relationshipHistory:[],
       judgmentUnlocks:{},forecastKnown:false,originTraceUnlocked:false,systemInsight:false,conflictReveal:0,
@@ -28,9 +30,9 @@ window.LibraryEngine=(()=>{
       supportUses:E.rules.supportCharges,supportUsedRound:0,lastActionId:null,lastActionActorId:null,stageActions:0,
       failureReason:"",recorded:false,log:[],presentation:[]};
   }
-  function toggle(s,id){if(!E.characterPool.includes(id)||s.phase!=="party")return false;const index=s.partyIds.indexOf(id);if(index>=0){if(s.partyIds.length<=1)return false;s.partyIds.splice(index,1);}else if(s.partyIds.length<E.rules.partySize)s.partyIds.push(id);else return false;if(s.partyIds.includes(s.supportId)){const replacement=E.characterPool.find(x=>!s.partyIds.includes(x));if(replacement)s.supportId=replacement;}return true;}
-  function support(s,id){if(s.phase!=="party"||s.partyIds.includes(id)||!E.characterPool.includes(id))return false;s.supportId=id;return true;}
-  function beginBriefing(s){if(s.partyIds.length!==E.rules.partySize||s.partyIds.includes(s.supportId))return false;s.phase="briefing";return true;}
+  function toggle(s,id){const pool=availableCharacterIds();if(!pool.includes(id)||s.phase!=="party")return false;const index=s.partyIds.indexOf(id);if(index>=0){if(s.partyIds.length<=1)return false;s.partyIds.splice(index,1);}else if(s.partyIds.length<E.rules.partySize)s.partyIds.push(id);else return false;if(s.partyIds.includes(s.supportId)){const replacement=pool.find(x=>!s.partyIds.includes(x));if(replacement)s.supportId=replacement;}return true;}
+  function support(s,id){if(s.phase!=="party"||s.partyIds.includes(id)||!availableCharacterIds().includes(id))return false;s.supportId=id;return true;}
+  function beginBriefing(s){if(s.partyIds.length!==E.rules.partySize||s.partyIds.includes(s.supportId)||!availableCharacterIds().includes(s.supportId))return false;s.phase="briefing";return true;}
   function beginExplore(s){if(!["party","briefing"].includes(s.phase)||s.partyIds.length!==E.rules.partySize)return false;s.phase="exploration";return true;}
   function selectLocation(s,id){if(s.phase!=="exploration"||currentInteraction(s)||s.investigationsLeft<=0||s.investigated.includes(id)||!E.investigations.some(x=>x.id===id))return false;s.selectedLocation=id;return true;}
   function leaveLocation(s){if(s.phase!=="exploration"||currentInteraction(s))return false;s.selectedLocation=null;return true;}
@@ -206,5 +208,5 @@ window.LibraryEngine=(()=>{
   function minaReaction(s){if(s.minaOfflineRounds||s.pendingBlueScreen)return E.dialogue.mina.offline;if(s.minaLoad<=1)return E.dialogue.mina.low;if(s.minaLoad<=3)return E.dialogue.mina.middle;return E.dialogue.mina.high;}
   function resultSummary(s){return`세 번째 사건 해결 · 고정 순서 ${s.lockOrder.map(id=>E.facts[id].label.slice(0,2)).join("→")} · 오판 ${s.misjudgments}회 · 현실 안정도 ${s.stability}/${E.rules.maxStability} · 미나 부하 ${s.minaLoad}/${E.rules.maxMinaLoad} · 관계 ${s.relationshipHistory.join(",")||"없음"}`;}
   function takePresentation(s){const queued=s.presentation.slice();s.presentation.length=0;return queued;}
-  return{create,toggle,support,beginBriefing,beginExplore,selectLocation,leaveLocation,investigate,currentInteraction,resolveInteraction,compareEvidence,judgeFact,deferJudgment,claimOptions,canJudgeFact,factConflict,start,actions,act,useSupport,supportStatus,currentPattern,nextPattern,patternForecast,stabilityRule,factStatus,canVerify,evidenceActive,recoveryRequirement,missingAnchors,bestRecovery,normalizeRecovery,canReinvestigate,lockedCount,minaReaction,resultSummary,takePresentation,character,event:E,_applyPattern:applyPattern,_checkBlueScreen:checkBlueScreen,_reinvestigateFact:reinvestigateFact};
+  return{create,availableCharacterIds,toggle,support,beginBriefing,beginExplore,selectLocation,leaveLocation,investigate,currentInteraction,resolveInteraction,compareEvidence,judgeFact,deferJudgment,claimOptions,canJudgeFact,factConflict,start,actions,act,useSupport,supportStatus,currentPattern,nextPattern,patternForecast,stabilityRule,factStatus,canVerify,evidenceActive,recoveryRequirement,missingAnchors,bestRecovery,normalizeRecovery,canReinvestigate,lockedCount,minaReaction,resultSummary,takePresentation,character,event:E,_applyPattern:applyPattern,_checkBlueScreen:checkBlueScreen,_reinvestigateFact:reinvestigateFact};
 })();

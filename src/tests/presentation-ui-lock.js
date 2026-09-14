@@ -2,13 +2,13 @@
 
 const assert=require("node:assert/strict");
 global.window=global;
-let timers=[],saved=null;
+let timers=[],saved=JSON.stringify({completed:["endless-classroom"]});
 global.setTimeout=callback=>{timers.push(callback);return timers.length;};
 global.clearTimeout=()=>{};
 global.localStorage={getItem(){return saved;},setItem(key,value){saved=value;}};
 const app={innerHTML:"",handler:null,addEventListener(type,handler){this.handler=handler;}};
 global.document={querySelector(){return app;}};
-require("../data/campaign.js");require("../data/characters.js");require("../data/neutral-abilities.js");require("../data/cafeteria-incident.js");require("../cafeteria-engine.js");require("../cafeteria-app.js");
+require("../data/campaign.js");require("../data/characters.js");require("../data/neutral-abilities.js");require("../data/cafeteria-incident.js");require("../cafeteria-engine.js");require("../ui-common.js");require("../cafeteria-app.js");
 const click=action=>app.handler({target:{dataset:{action},parentElement:app}});
 click("briefing");click("begin-explore");click("select-location:inventory");click("investigate:inventory-archive");assert.equal(SEONGA_CAFETERIA_UI_DEBUG.isLocked(),true);assert.match(app.innerHTML,/presentation-layer narration/);const before=SEONGA_CAFETERIA_UI_DEBUG.getState().investigationsLeft;click("select-location:staff");assert.equal(SEONGA_CAFETERIA_UI_DEBUG.getState().investigationsLeft,before,"연출 중 연타가 조사를 중복 실행하지 않아야 한다.");assert.equal(SEONGA_CAFETERIA_UI_DEBUG.getState().selectedLocation,null);
 assert.match(app.innerHTML,/계속/);assert.equal(timers.length,0,"서술은 자동 진행 타이머를 만들지 않아야 한다.");

@@ -8,6 +8,7 @@ global.document={querySelector(){return app;}};
 require("../data/characters.js");
 require("../data/tutorial-endless-classroom.js");
 require("../engine.js");
+require("../ui-common.js");
 require("../app.js");
 
 function click(action){app.handler({target:{dataset:{},getAttribute(name){return name==="data-action"?action:null;},parentElement:app}});}

@@ -1,34 +1,21 @@
 "use strict";
 
 const app=document.querySelector("#app"),E=CafeteriaEngine.event;
-let state=CafeteriaEngine.create(),activePresentation=null,inputLocked=false,presentationQueue=[];
-const button=(label,action,disabled=false,description="",primary=false)=>`<button type="button" class="action-button ${primary?"primary":""}" data-action="${action}" ${disabled||inputLocked?"disabled":""}><strong>${label}</strong>${description?`<small>${description}</small>`:""}</button>`;
-
-const ICON_PATHS={hwayoung:"assets/icons/hwayoung.png","kang-unshim":"assets/icons/kang-unshim.png","epi-minos":"assets/icons/epi-minos.png",inan:"assets/icons/inan.png","kim-wooju":"assets/icons/kim-wooju.png",mageuna:"assets/icons/mageuna.png","byeon-ari":"assets/icons/byeon-ari.png",josangmin:"assets/icons/josangmin.png","jegal-mina":"assets/icons/jegal-mina.png"};
-const iconMarkup=(id,className="char-icon")=>ICON_PATHS[id]?`<img class="${className}" src="${ICON_PATHS[id]}" alt="" aria-hidden="true">`:"";
-const MINA_THEME_PATH="assets/jegal-mina-theme.css";
-if(!document.querySelector('link[data-seonga-jegal-mina-theme]')){const link=document.createElement("link");link.rel="stylesheet";link.href=MINA_THEME_PATH;link.dataset.seongaJegalMinaTheme="";document.head.append(link);}
+let state=CafeteriaEngine.create(),inputLocked=false;
+const iconMarkup=SEONGA_UI.iconMarkup;
+SEONGA_UI.ensureMinaTheme();
+let presentation;
+const button=(label,action,disabled=false,description="",primary=false)=>SEONGA_UI.button(label,action,{disabled:disabled||inputLocked,description,primary});
 
 const cast=()=>[...state.partyIds,state.supportId].filter((id,index,all)=>all.indexOf(id)===index);
 
-function presentationMarkup(){
-  if(!activePresentation)return"";
-  const x=activePresentation,kind=x.type||"narration",commonTone=["damage","danger","success","warning"].includes(x.tone),accentId=x.accent||(!commonTone&&E.characterPool.includes(x.source)?x.source:""),accent=accentId?` accent-${accentId}`:"",tone=x.tone?` tone-${x.tone}`:"",body=kind==="effect"&&x.items?`<ul>${x.items.map(item=>`<li>${item.text}</li>`).join("")}</ul>`:`<strong>${kind==="dialogue"?`“${x.text}”`:x.text}</strong>`;
-  return`<aside class="presentation-layer ${kind}${accent}${tone}" aria-live="assertive">${kind==="dialogue"?iconMarkup(accentId,"presentation-watermark"):""}<span class="presentation-kind">${kind==="dialogue"?x.speaker:kind==="effect"?"RESULT":"SCENE"}</span><div class="presentation-body">${body}</div><button type="button" class="presentation-next" data-action="presentation-next">계속 <b>›</b></button></aside>`;
-}
+function presentationMarkup(){return presentation.markup();}
 function render(){const views={party:renderParty,briefing:renderBriefing,exploration:renderExploration,battle:renderBattle,interlude:renderInterlude,success:renderResult,failure:renderResult};app.innerHTML=presentationMarkup()+views[state.phase]();}
-function bundlePresentation(events){const bundled=[];for(const item of events){const previous=bundled[bundled.length-1];if(item.type==="effect"&&previous?.type==="effect"){previous.items.push(item);previous.text=previous.items.map(x=>x.text).join(" · ");if(["danger","damage"].includes(item.tone))previous.tone=item.tone;}else bundled.push(item.type==="effect"?{...item,items:[item]}:item);}return bundled;}
-function advancePresentation(){if(!presentationQueue.length){activePresentation=null;inputLocked=false;render();return;}activePresentation=presentationQueue.shift();render();}
-function playPresentation(){
-  presentationQueue.push(...bundlePresentation(CafeteriaEngine.takePresentation(state)));
-  if(window.SEONGA_TEST_INSTANT_PRESENTATION){presentationQueue.length=0;activePresentation=null;inputLocked=false;render();return;}
-  if(inputLocked||!presentationQueue.length){render();return;}
-  inputLocked=true;advancePresentation();
-}
-function flushPresentation(){presentationQueue.length=0;CafeteriaEngine.takePresentation(state);activePresentation=null;inputLocked=false;render();}
+presentation=SEONGA_UI.createPresentation({event:E,getEvents:()=>CafeteriaEngine.takePresentation(state),render,setLocked:value=>inputLocked=value});
+const advancePresentation=()=>presentation.advance(),playPresentation=()=>presentation.play(),flushPresentation=()=>presentation.flush();
 
 function renderParty(){
-  const pool=E.characterPool.map(CafeteriaEngine.character),support=CafeteriaEngine.character(state.supportId);
+  const pool=CafeteriaEngine.availableCharacterIds().map(CafeteriaEngine.character),support=CafeteriaEngine.character(state.supportId);
   const roster=pool.map((c,i)=>{const selected=state.partyIds.includes(c.id),rear=c.id===state.supportId;return`<button type="button" class="roster-row accent-${c.id} ${selected?"selected":""} ${rear?"rear":""}" data-action="toggle:${c.id}" aria-pressed="${selected}" ${inputLocked?"disabled":""}><span class="roster-index">${String(i+1).padStart(2,"0")}</span><span class="roster-emblem">${iconMarkup(c.id,"roster-icon")}</span><span class="roster-name"><strong>${c.name}</strong><small>${c.game.position}열 · ${c.game.role}</small></span><span class="roster-state">${selected?"출전":"대기"}</span></button>`;}).join("");
   const rear=pool.filter(c=>!state.partyIds.includes(c.id)).map(c=>`<button type="button" class="support-pick accent-${c.id} ${c.id===state.supportId?"selected":""}" data-action="support-select:${c.id}" ${inputLocked?"disabled":""}><strong class="icon-label">${iconMarkup(c.id,"support-pick-icon")}<span>${c.name}</span></strong><small>${E.supportAdapters[c.id].label}</small></button>`).join("");
   return`<main class="formation-screen"><header class="screen-heading"><p class="chapter">INCIDENT 02 · DEPLOYMENT</p><h1>급식동에 데려갈 네 명</h1><p>명단을 눌러 출전을 정하고, 남은 인원 가운데 후방 담당을 지정한다.</p></header><div class="formation-layout"><section class="roster-list" aria-label="출전 명단">${roster}</section><aside class="formation-summary"><p class="eyebrow">CURRENT UNIT · ${state.partyIds.length}/${E.rules.partySize}</p><div class="party-ribbon">${state.partyIds.map((id,i)=>`<span class="accent-${id}">${iconMarkup(id,"ribbon-icon")}<b>${i+1}</b>${CafeteriaEngine.character(id).name}</span>`).join("")}</div><p class="eyebrow">REAR SUPPORT</p><div class="support-picks">${rear}</div><p class="support-brief accent-${support.id}"><strong class="icon-label">${iconMarkup(support.id,"label-icon")}<span>${support.name}</span></strong>${E.supportAdapters[support.id].description}</p>${button("편성 확정", "briefing",state.partyIds.length!==E.rules.partySize,"브리핑으로 이동한다.",true)}</aside></div></main>`;

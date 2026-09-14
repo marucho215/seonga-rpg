@@ -9,16 +9,17 @@ window.MagnumEngine=(()=>{
   const effect=(s,text,meta={})=>present(s,"effect",text,meta);
   const aliveIds=s=>s.partyIds.filter(id=>member(s,id).hp>0);
   const currentId=s=>s.order[s.turn];
-  const availableCharacterIds=()=>[...E.characterPool];
+  const availableCharacterIds=()=>window.CampaignProgress?CampaignProgress.availableCharacterIds(E.id,E.characterPool):[...E.characterPool];
   const mirrorAmount=amount=>Math.max(1,Math.round(amount*B.mirrorRatio));
 
   function create(){
     const members={};C.forEach(x=>members[x.id]={hp:x.game.hp,guard:0,heat:0,info:0,memory:0,cool:0,effort:0,rules:SEONGA_NEUTRAL_KITS[x.id]?.limit||0});
-    return{phase:"party",partyIds:["hwayoung","kang-unshim","inan","kim-wooju"],supportId:"byeon-ari",members,investigated:[],selectedLocation:null,investigationsLeft:E.rules.investigationLimit,clues:[],rewards:{forecastDetail:false,initialInstability:0,reconstructionReduction:0,copyCancelCharges:0,mirrorDampenCharges:0},magnum:{hp:B.magnumMaxHp,maxHp:B.magnumMaxHp,instability:0,maxInstability:B.instabilityMax,phase:"imitation",copyQueue:null,lastCopiedActor:null,lastCopiedAbility:null,reconstructed:false,shattered:false,shield:0},round:1,order:[],turn:0,acted:[],supportUses:E.rules.supportCharges,supportUsedRound:0,bossTargetIndex:0,bossAttackBlock:false,bossAttackBonus:0,vulnerability:0,mirroredAbilitySeal:null,stageActions:0,failureReason:"",log:[],presentation:[]};
+    const pool=availableCharacterIds(),supportId=pool.includes("byeon-ari")?"byeon-ari":pool.find(id=>!["hwayoung","kang-unshim","inan","kim-wooju"].includes(id))||"epi-minos";
+    return{phase:"party",partyIds:["hwayoung","kang-unshim","inan","kim-wooju"],supportId,members,investigated:[],selectedLocation:null,investigationsLeft:E.rules.investigationLimit,clues:[],rewards:{forecastDetail:false,initialInstability:0,reconstructionReduction:0,copyCancelCharges:0,mirrorDampenCharges:0},magnum:{hp:B.magnumMaxHp,maxHp:B.magnumMaxHp,instability:0,maxInstability:B.instabilityMax,phase:"imitation",copyQueue:null,lastCopiedActor:null,lastCopiedAbility:null,reconstructed:false,shattered:false,shield:0},round:1,order:[],turn:0,acted:[],supportUses:E.rules.supportCharges,supportUsedRound:0,bossTargetIndex:0,bossAttackBlock:false,bossAttackBonus:0,vulnerability:0,mirroredAbilitySeal:null,stageActions:0,failureReason:"",log:[],presentation:[]};
   }
   function toggle(s,id){const pool=availableCharacterIds();if(s.phase!=="party"||!pool.includes(id))return false;const index=s.partyIds.indexOf(id);if(index>=0){if(s.partyIds.length<=1)return false;s.partyIds.splice(index,1);}else if(s.partyIds.length<E.rules.partySize)s.partyIds.push(id);else return false;if(s.partyIds.includes(s.supportId)){const replacement=pool.find(x=>!s.partyIds.includes(x));if(replacement)s.supportId=replacement;}return true;}
   function support(s,id){if(s.phase!=="party"||s.partyIds.includes(id)||!availableCharacterIds().includes(id))return false;s.supportId=id;return true;}
-  function beginBriefing(s){if(s.partyIds.length!==E.rules.partySize||s.partyIds.includes(s.supportId))return false;s.phase="briefing";return true;}
+  function beginBriefing(s){if(s.partyIds.length!==E.rules.partySize||s.partyIds.includes(s.supportId)||!availableCharacterIds().includes(s.supportId))return false;s.phase="briefing";return true;}
   function beginExplore(s){if(!["party","briefing"].includes(s.phase)||s.partyIds.length!==E.rules.partySize)return false;s.phase="exploration";return true;}
   function selectLocation(s,id){if(s.phase!=="exploration"||s.investigationsLeft<=0||s.investigated.includes(id)||!E.investigations.some(x=>x.id===id))return false;s.selectedLocation=id;return true;}
   function leaveLocation(s){if(s.phase!=="exploration")return false;s.selectedLocation=null;return true;}

@@ -3,6 +3,7 @@
 window.CafeteriaEngine = (() => {
   const E=SEONGA_CAFETERIA_EVENT,C=SEONGA_CHARACTERS;
   const character=id=>C.find(x=>x.id===id),member=(s,id)=>s.members[id];
+  const availableCharacterIds=()=>window.CampaignProgress?CampaignProgress.availableCharacterIds(E.id,E.characterPool):[...E.characterPool];
   const subject=name=>{const code=name.charCodeAt(name.length-1)-0xac00;return`${name}${code>=0&&code<=11171&&code%28!==0?"이":"가"}`;};
   function present(s,type,text,meta={}){const item={type,text,message:text,...meta};s.log.push(item);s.presentation.push(item);return item;}
   const dialogue=(s,text,speaker,meta={})=>present(s,"dialogue",text,{speaker,...meta});
@@ -15,8 +16,9 @@ window.CafeteriaEngine = (() => {
   function create(){
     const members={};
     C.forEach(x=>members[x.id]={hp:x.game.hp,heat:0,info:0,memory:0,cool:0,effort:0,rules:SEONGA_NEUTRAL_KITS[x.id]?.limit||0});
+    const pool=availableCharacterIds(),supportId=pool.includes("byeon-ari")?"byeon-ari":pool.find(id=>!["hwayoung","kang-unshim","inan","kim-wooju"].includes(id))||"epi-minos";
     return{
-      phase:"party",partyIds:["hwayoung","kang-unshim","inan","kim-wooju"],supportId:"byeon-ari",members,
+      phase:"party",partyIds:["hwayoung","kang-unshim","inan","kim-wooju"],supportId,members,
       clues:[],investigated:[],selectedLocation:null,investigationsLeft:E.rules.investigationLimit,unlocks:{suppliesPriority:false},
       stage:0,progress:0,secondary:0,priority:null,spread:3,time:0,round:1,order:[],turn:0,acted:[],
       supportUses:E.rules.supportCharges,supportUsed:false,blockEffect:null,traceUsed:false,prediction:false,predictedChain:null,safeSeal:0,reserveBoost:0,
@@ -26,16 +28,16 @@ window.CafeteriaEngine = (() => {
   }
 
   function toggle(s,id){
-    if(!E.characterPool.includes(id)||s.phase!=="party")return false;
+    const pool=availableCharacterIds();if(!pool.includes(id)||s.phase!=="party")return false;
     const index=s.partyIds.indexOf(id);
     if(index>=0){if(s.partyIds.length<=1)return false;s.partyIds.splice(index,1);}
     else if(s.partyIds.length<E.rules.partySize){s.partyIds.push(id);}
     else return false;
-    if(s.partyIds.includes(s.supportId)){const replacement=E.characterPool.find(x=>!s.partyIds.includes(x));if(replacement)s.supportId=replacement;}
+    if(s.partyIds.includes(s.supportId)){const replacement=pool.find(x=>!s.partyIds.includes(x));if(replacement)s.supportId=replacement;}
     return true;
   }
-  function support(s,id){if(s.phase!=="party"||s.partyIds.includes(id)||!E.characterPool.includes(id))return false;s.supportId=id;return true;}
-  function beginBriefing(s){if(s.partyIds.length!==E.rules.partySize||s.partyIds.includes(s.supportId))return false;s.phase="briefing";return true;}
+  function support(s,id){if(s.phase!=="party"||s.partyIds.includes(id)||!availableCharacterIds().includes(id))return false;s.supportId=id;return true;}
+  function beginBriefing(s){if(s.partyIds.length!==E.rules.partySize||s.partyIds.includes(s.supportId)||!availableCharacterIds().includes(s.supportId))return false;s.phase="briefing";return true;}
   function beginExplore(s){if(!["party","briefing"].includes(s.phase)||s.partyIds.length!==E.rules.partySize)return false;s.phase="exploration";return true;}
   function selectLocation(s,id){if(s.phase!=="exploration"||s.investigationsLeft<=0||s.investigated.includes(id)||!E.investigations.some(x=>x.id===id))return false;s.selectedLocation=id;return true;}
   function leaveLocation(s){if(s.phase!=="exploration")return false;s.selectedLocation=null;return true;}
@@ -285,5 +287,5 @@ window.CafeteriaEngine = (() => {
   function transitionDialogue(s){return(E.dialogue.transitions[s.stage]||[]).filter(x=>s.partyIds.includes(x.id)||s.supportId===x.id);}
   function supportAvailable(s){return supportStatus(s).available;}
 
-  return{create,toggle,support,beginBriefing,beginExplore,selectLocation,leaveLocation,investigate,start,nextStage,actions,act,useSupport,supportAvailable,supportStatus,priorityAvailable,currentPattern:pattern,transitionDialogue,objectiveInfo,takePresentation,character,event:E};
+  return{create,availableCharacterIds,toggle,support,beginBriefing,beginExplore,selectLocation,leaveLocation,investigate,start,nextStage,actions,act,useSupport,supportAvailable,supportStatus,priorityAvailable,currentPattern:pattern,transitionDialogue,objectiveInfo,takePresentation,character,event:E};
 })();

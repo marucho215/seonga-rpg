@@ -3,7 +3,7 @@
 const assert=require("node:assert/strict");
 global.window=global;
 global.SEONGA_TEST_INSTANT_PRESENTATION=true;
-let saved=null;
+let saved=JSON.stringify({completed:["endless-classroom"]});
 global.localStorage={getItem(){return saved;},setItem(key,value){saved=value;}};
 const app={innerHTML:"",handler:null,addEventListener(type,handler){this.handler=handler;}};
 global.document={querySelector(){return app;}};
@@ -12,6 +12,7 @@ require("../data/characters.js");
 require("../data/neutral-abilities.js");
 require("../data/cafeteria-incident.js");
 require("../cafeteria-engine.js");
+require("../ui-common.js");
 require("../cafeteria-app.js");
 
 function click(action){app.handler({target:{dataset:{action},parentElement:app}});}

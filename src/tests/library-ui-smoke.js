@@ -1,10 +1,10 @@
 "use strict";
 
 const assert=require("node:assert/strict");
-global.window=global;global.SEONGA_TEST_INSTANT_PRESENTATION=true;let saved=null;
+global.window=global;global.SEONGA_TEST_INSTANT_PRESENTATION=true;let saved=JSON.stringify({completed:["endless-classroom","cafeteria-containment"]});
 global.localStorage={getItem(){return saved;},setItem(key,value){saved=value;}};
 const app={innerHTML:"",handler:null,addEventListener(type,handler){this.handler=handler;}};global.document={querySelector(){return app;}};
-require("../data/campaign.js");require("../data/characters.js");require("../data/neutral-abilities.js");require("../data/library-incident.js");require("../library-engine.js");require("../library-app.js");
+require("../data/campaign.js");require("../data/characters.js");require("../data/neutral-abilities.js");require("../data/library-incident.js");require("../library-engine.js");require("../ui-common.js");require("../library-app.js");
 const click=action=>app.handler({target:{dataset:{action},parentElement:app}});
 
 assert.match(app.innerHTML,/도서관에 데려갈 네 명/);click("briefing");click("begin-explore");

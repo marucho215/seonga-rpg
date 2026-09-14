@@ -12,6 +12,7 @@ require("../data/cafeteria-incident.js");
 require("../data/library-incident.js");
 require("../data/magnum-incident.js");
 
+assert.deepEqual(CampaignProgress.eventCatalog.map(x=>x.id),["endless-classroom","cafeteria-containment","library-reality-audit","magnum-mirroring-incident"]);
 assert.deepEqual(CampaignProgress.unlockedCharacterIds(),["hwayoung","kang-unshim","epi-minos","inan","kim-wooju"]);
 CampaignProgress.complete("endless-classroom","테스트 완료");
 assert.deepEqual(CampaignProgress.unlockedCharacterIds(),["hwayoung","kang-unshim","epi-minos","inan","kim-wooju","mageuna","byeon-ari","josangmin"]);
@@ -33,4 +34,5 @@ assert.ok(!SEONGA_MAGNUM_EVENT.characterPool.includes("magnum"));
 assert.equal(Object.hasOwn(JSON.parse(saved),"records"),false,"사건 완료 시 대응 기록을 저장하지 않아야 한다.");
 saved=JSON.stringify({completed:["endless-classroom"],records:[{summary:"과거 기록"}]});
 assert.deepEqual(CampaignProgress.load(),{completed:["endless-classroom"]},"기존 세이브의 records는 무시해야 한다.");
+saved="{broken";assert.deepEqual(CampaignProgress.load(),{completed:[]},"손상된 세이브는 빈 진행도로 복구해야 한다.");
 console.log(JSON.stringify({initial:CampaignProgress.rosterUnlocks.initial,afterFirst:CampaignProgress.rosterUnlocks["endless-classroom"],afterThird:CampaignProgress.rosterUnlocks["library-reality-audit"],afterFourth:CampaignProgress.rosterUnlocks["magnum-mirroring-incident"],tutorialPool:SEONGA_TUTORIAL_EVENT.characterPool,cafeteriaPool:SEONGA_CAFETERIA_EVENT.characterPool,libraryPool:SEONGA_LIBRARY_EVENT.characterPool,magnumPool:SEONGA_MAGNUM_EVENT.characterPool},null,2));

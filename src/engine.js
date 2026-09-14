@@ -3,6 +3,7 @@
 window.GameEngine = (() => {
   const event=SEONGA_TUTORIAL_EVENT, chars=SEONGA_CHARACTERS;
   const character=id=>chars.find(c=>c.id===id), member=(s,id)=>s.members[id], stage=s=>event.stages[s.stageIndex];
+  const availableCharacterIds=()=>window.CampaignProgress?CampaignProgress.availableCharacterIds(event.id,event.characterPool):[...event.characterPool];
   const subject=name=>{const code=name.charCodeAt(name.length-1)-0xac00;return`${name}${code>=0&&code<=11171&&code%28!==0?"이":"가"}`;};
   function present(s,type,text,meta={}){const item={type,text,message:text,...meta};s.log.push(item);s.presentation.push(item);return item;}
   const dialogue=(s,text,speaker,meta={})=>present(s,"dialogue",text,{speaker,...meta});
@@ -31,7 +32,7 @@ window.GameEngine = (() => {
     const members={};chars.forEach(c=>members[c.id]={hp:c.game.hp,heat:0,buzz:0,memory:0,meltdown:0,guard:0,strain:0,overheat:0,sedation:0});
     return{phase:"party",partyIds:["hwayoung","kang-unshim","inan","kim-wooju"],members,clues:[],investigated:[],selectedLocation:null,investigationsLeft:event.rules.investigationLimit,students:event.students.map((x,i)=>({...x,stage:event.initialStudentStages[i],evacuated:false})),stageIndex:0,stageProgress:0,threatPressure:0,turnOrder:[],turnIndex:0,round:1,supportUsed:false,supportCharges:event.rules.supportCharges,supportShield:false,lastWorsened:null,rootResolved:false,routeUses:0,lastCategory:null,deferredPressure:0,log:[],presentation:[]};
   }
-  function toggleParty(s,id){if(!event.characterPool.includes(id))return;const i=s.partyIds.indexOf(id);if(i>=0&&s.partyIds.length>1)s.partyIds.splice(i,1);else if(i<0&&s.partyIds.length<4)s.partyIds.push(id);}
+  function toggleParty(s,id){if(!availableCharacterIds().includes(id))return false;const i=s.partyIds.indexOf(id);if(i>=0&&s.partyIds.length>1)s.partyIds.splice(i,1);else if(i<0&&s.partyIds.length<4)s.partyIds.push(id);else return false;return true;}
   function startBriefing(s){if(s.partyIds.length!==4)return false;s.phase="briefing";effect(s,`출전 4명 · 후방 ${character(absentId(s)).name}`,{stat:"formation"});return true;}
   function startExploration(s){s.phase="exploration";return true;}
   function selectLocation(s,id){if(s.phase!=="exploration"||s.investigated.includes(id)||s.investigationsLeft<=0)return false;if(!event.investigations.some(x=>x.id===id))return false;s.selectedLocation=id;return true;}
@@ -101,5 +102,5 @@ window.GameEngine = (() => {
     if(id==="hwayoung"){s.supportShield=true;effect(s,"현상 반동 차단 대기",{source:id,stat:"supportShield",tone:"guard"});}if(id==="kang-unshim"){if(s.stageIndex<2)addProgress(s);else{s.routeUses++;effect(s,`안전 통과 +1 · ${s.routeUses}`,{source:id,stat:"routeUses",delta:1});}s.threatPressure++;narration(s,"복도 밖으로 퍼진 제보에 교실 안의 복창도 한 음 높아진다.",{accent:id,tone:"warning"});effect(s,`현상 압력 +1 · ${s.threatPressure}`,{source:id,stat:"pressure",delta:1,tone:"warning"});}if(id==="epi-minos"){if(s.lastWorsened&&s.lastWorsened.stageIndex===s.stageIndex){const target=s.students[s.lastWorsened.studentIndex];target.stage=Math.max(0,target.stage-1);narration(s,"직전 장면이 겹쳐지며 학생의 굳은 자세가 한 박자 전으로 돌아간다.",{accent:id,tone:"recover"});effect(s,`${target.label} 악화 되감기`,{source:id,stat:"studentState",delta:-1,tone:"recover"});s.lastWorsened=null;}else if(s.stageIndex<2)addProgress(s);else{s.routeUses++;effect(s,`안전 통과 +1 · ${s.routeUses}`,{source:id,stat:"routeUses",delta:1});}}if(id==="inan"){if(s.stageIndex>0&&s.students.some(x=>!x.evacuated&&x.stage>0))stabilize(s);else lowerPressure(s,1);}if(id==="kim-wooju"){lowerPressure(s,2);if(s.stageIndex===2){s.routeUses++;effect(s,`안전 통과 +1 · ${s.routeUses}`,{source:id,stat:"routeUses",delta:1});}}finishStageIfReady(s);return true;
   }
   function takePresentation(s){const queued=s.presentation.slice();s.presentation.length=0;return queued;}
-  return{createState,character,absentId,toggleParty,startBriefing,startExploration,selectLocation,leaveLocation,investigate,startBattle,continueStage,availableActions,act,useSupport,takePresentation};
+  return{createState,character,absentId,availableCharacterIds,toggleParty,startBriefing,startExploration,selectLocation,leaveLocation,investigate,startBattle,continueStage,availableActions,act,useSupport,takePresentation};
 })();
